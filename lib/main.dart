@@ -91,15 +91,14 @@ class _HomePageState extends State<HomePage> {
         children: <Widget>[
           GoogleMap(
             mapType: MapType.normal,
-            myLocationButtonEnabled: true,
-            myLocationEnabled: true,
-            compassEnabled: true,
             initialCameraPosition: _kGooglePlex,
             onMapCreated: _onMapCreated,
             trafficEnabled: true,
             //     (GoogleMapController controller) {
             //   _controller.complete(controller);
             // },
+            compassEnabled: true,
+
             markers: Set<Marker>.of(markers.values),
             onLongPress: (LatLng latLng) {
               // creating a new MARKER
@@ -176,7 +175,7 @@ class _HomePageState extends State<HomePage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: MediaQuery.of(context).size.width * 0.9,
+            width: MediaQuery.of(context).size.width * 0.93,
             decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -288,7 +287,7 @@ class _HomePageState extends State<HomePage> {
           ),
           Container(
             // alignment: Alignment.bottomCenter,
-            width: MediaQuery.of(context).size.width * 0.8,
+            width: MediaQuery.of(context).size.width * 0.93,
             // margin: EdgeInsets.only(left: 20.0, right: 20.0),
             child: RaisedGradientButton(
                 child: Text(
