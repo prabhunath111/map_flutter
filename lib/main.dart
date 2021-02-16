@@ -98,7 +98,8 @@ class _HomePageState extends State<HomePage> {
             //   _controller.complete(controller);
             // },
             compassEnabled: true,
-
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
             markers: Set<Marker>.of(markers.values),
             onLongPress: (LatLng latLng) {
               // creating a new MARKER
