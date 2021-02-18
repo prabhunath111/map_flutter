@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -8,12 +9,13 @@ import 'package:geocoder/geocoder.dart';
 import 'package:map_flutter/widgets/customrow.dart';
 import 'button.dart';
 import 'getcurrentlocation.dart';
+import 'package:google_maps_webservice/places.dart' as webserv;
 
 void main() => runApp(MaterialApp(
-  theme: ThemeData(primarySwatch: Colors.purple, cursorColor: Colors.white),
-  debugShowCheckedModeBanner: false,
-  home: HomePage(),
-));
+      theme: ThemeData(primarySwatch: Colors.purple, cursorColor: Colors.white),
+      debugShowCheckedModeBanner: false,
+      home: HomePage(),
+    ));
 
 class HomePage extends StatefulWidget {
   @override
@@ -24,6 +26,7 @@ class _HomePageState extends State<HomePage> {
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController mapController;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
+
   // var getlocation = GetCurrentLocation();
   LatLngBounds bound;
 
@@ -34,12 +37,11 @@ class _HomePageState extends State<HomePage> {
 
   static LatLng origin;
   static LatLng destination;
-  static String originAdd = '';
-  static String destAdd = '';
-  TextEditingController textEditingController = TextEditingController();
+  static String originAdd = "Enter Origin";
+  static String destAdd = "Enter Destination";
+  static const kGoogleApiKey = "AIzaSyAUDJWykw7T79Tftb8EmXFaYRkAwr3SGRk";
   BitmapDescriptor customIcon;
   Position _currentPosition;
-
 
   // this will hold the generated polylines
   Set<Polyline> _polylines = {};
@@ -157,8 +159,8 @@ class _HomePageState extends State<HomePage> {
               title: (i == 0)
                   ? originAdd
                   : (i == 1)
-                  ? destAdd
-                  : ""),
+                      ? destAdd
+                      : ""),
           icon: customIcon);
       setState(() {
         markers[markerId] = marker;
@@ -193,32 +195,32 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         child: Column(
                           children: [
-                            Row(
-                              children: [
-                                Icon(Icons.panorama_fish_eye,
-                                    size: 18.0,
-                                    color: Colors.cyan.withOpacity(0.8)),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left:8.0),
-                                    child: TextField(
-                                      style: TextStyle(color: Colors.white,
-                                          fontSize: 14.0,
-                                          decoration: TextDecoration.none),
-                                      decoration: InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: "Enter origin",
-                                          hintStyle: TextStyle(
-                                              fontSize: 14.0,
-                                              decorationColor: Colors.white,
-                                              decoration: TextDecoration.none,
-                                              color: Colors.white)),
-                                      onChanged: (e) =>
-                                          _onChangedHandler(e, "origin"),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.panorama_fish_eye,
+                                      size: 18.0,
+                                      color: Colors.cyan.withOpacity(0.8)),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 8.0),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          _onChangedHandler("origin");
+                                        },
+                                        child: Text(
+                                          "$originAdd",
+                                          style: TextStyle(
+                                            fontSize: 14.0,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                             Row(
                               children: [
@@ -241,32 +243,32 @@ class _HomePageState extends State<HomePage> {
                                 )
                               ],
                             ),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.panorama_fish_eye,
-                                  size: 18.0,
-                                  color: Color(0xFFFDDEEF),
-                                ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left:8.0),
-                                    child: TextField(style: TextStyle(color: Colors.white,
-                                        fontSize: 14.0,
-                                        decoration: TextDecoration.none),
-                                      decoration: InputDecoration(
-                                        hintText: "Enter destination",
-                                        hintStyle: TextStyle(
-                                            fontSize: 14.0,
-                                            decoration: TextDecoration.none,
-                                            color: Colors.white),
-                                        border: InputBorder.none,),
-                                      onChanged: (e) =>
-                                          _onChangedHandler(e, "dest"),
-                                    ),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom:8.0),
+                              child: Row(
+
+                                children: [
+                                  Icon(
+                                    Icons.panorama_fish_eye,
+                                    size: 18.0,
+                                    color: Color(0xFFFDDEEF),
                                   ),
-                                ),
-                              ],
+                                  Expanded(
+                                    child: Padding(
+                                        padding: const EdgeInsets.only(left: 8.0),
+                                        child: GestureDetector(
+                                            onTap: () {
+                                              _onChangedHandler("dest");
+                                            },
+                                            child: Text("$destAdd", style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14.0
+                                            ),
+                                            ),
+                                        )),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -307,13 +309,22 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  _onChangedHandler(e, key) {
-    if (key == "origin") {
-      originAdd = e;
-    } else {
-      destAdd = e;
-    }
-    setState(() {});
+  Future _onChangedHandler(key) async {
+    // should show search screen here
+    webserv.Prediction p = await PlacesAutocomplete.show(
+        context: context,
+        apiKey: kGoogleApiKey,
+        mode: Mode.overlay,
+        // Mode.fullscreen
+        language: "en",
+        components: [webserv.Component(webserv.Component.country, "in")]);
+    setState(() {
+      if (key == "origin") {
+        originAdd = p.description.toString();
+      } else {
+        destAdd = p.description.toString();
+      }
+    });
   }
 
   void _onMapCreated(GoogleMapController controller) {
@@ -321,7 +332,7 @@ class _HomePageState extends State<HomePage> {
     _controller.complete(controller);
   }
 
-  setPolylines() async {
+  Future setPolylines() async {
     PolylineResult result = await polylinePoints?.getRouteBetweenCoordinates(
         googleAPIKey,
         PointLatLng(origin.latitude, origin.longitude),
@@ -346,10 +357,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> updateCameraLocation(
-      LatLng source,
-      LatLng destination,
-      GoogleMapController mapController,
-      ) async {
+    LatLng source,
+    LatLng destination,
+    GoogleMapController mapController,
+  ) async {
     if (mapController == null) return;
 
     LatLngBounds bounds;
